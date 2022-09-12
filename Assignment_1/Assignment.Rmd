@@ -1,0 +1,67 @@
+---
+title: "Assignment1"
+author: "Shivani Pitla"
+date: "2022-09-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+```{r}
+#1,2.naming the dataset and importing the dataset into R from source kaggle
+library(ggplot2)
+shivani_dataset <- read.csv("C:/Users/shiva/OneDrive/Desktop/House_Rent_Dataset.csv")
+View(shivani_dataset)
+head(shivani_dataset, n=15) 
+#printing out the first 15 entries in the dataframe
+tail(shivani_dataset) 
+#printing out the last 6 entries in the dataframe
+nrow(shivani_dataset) 
+#printing out the total number of rows in the dataframe
+ncol(shivani_dataset) 
+#printing out the total number of columns in the datframe
+str(shivani_dataset) 
+#To view the structure of the dataframe
+summary(shivani_dataset) 
+#To view the summary of the dataframe
+shivani_datasettransformed <- (shivani_dataset$Rent + mean(shivani_dataset$Rent)/var(shivani_dataset$Rent))
+shivani_datasettransformed 
+#transformation of variables has been done above
+hist(shivani_dataset$Size)
+#plotting one quantitative variable 
+library("esquisse")
+ggplot(shivani_dataset) +
+  aes(x = Size, y = Rent) +
+  geom_point(shape = "circle", size = 1.5, colour = "#112446") +
+  theme_minimal()
+#created one scatter plot where size is on x-axis and rent is on y-axis using esquisse
+tinytex::install_tinytex()
+library(tinytex)
+library(latexpdf)
+
+
+
+
+
+```
+

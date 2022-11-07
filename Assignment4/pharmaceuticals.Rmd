@@ -1,0 +1,125 @@
+---
+title: "ASSIGNMENT 4 FML"
+author: "Shivani Haridas Pitla"
+date: "2022-11-06"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(factoextra)
+library(ISLR)
+library(gridExtra)
+library(cluster)
+library(dplyr)
+```
+
+```{r}
+PHARMACEUTICALS=read.csv("C:/Users/shiva/Downloads/Pharmaceuticals.csv")
+```
+
+```{r}
+#a. Use only the numerical variables (1 to 9) to cluster the 21 firms. Justify the various choices made in conducting the cluster analysis, such as weights for different variables, the specific clustering algorithm(s) used, the number of clusters formed, and so on. 
+
+#choosing the numerical variables and removing the Null Values from the dataset.
+colSums(is.na(PHARMACEUTICALS))
+row.names(PHARMACEUTICALS)<- PHARMACEUTICALS[,1]
+PHARMACEUTICALS1<- PHARMACEUTICALS[, 3:11]
+head(PHARMACEUTICALS1)
+```
+
+```{r}
+# Scaling and Normalisation the dataset(PARMACEUTICALS).
+PHARMACEUTICALS_SCALE <- scale(PHARMACEUTICALS1)
+head(PHARMACEUTICALS_SCALE)
+```
+
+```{R}
+# Using several values of K, computing K-means clustering for various centers, and comparing the results
+kmeans.1 <- kmeans(PHARMACEUTICALS_SCALE, centers = 2, nstart = 25)
+kmeans.2<- kmeans(PHARMACEUTICALS_SCALE, centers = 5, nstart = 25)
+kmeans.3<- kmeans(PHARMACEUTICALS_SCALE, centers = 6, nstart = 25)
+Plot.1<-fviz_cluster(kmeans.1, data = PHARMACEUTICALS_SCALE)+ggtitle("k=2")
+plot.2<-fviz_cluster(kmeans.2, data = PHARMACEUTICALS_SCALE)+ggtitle("k=5")
+plot.3<-fviz_cluster(kmeans.3, data = PHARMACEUTICALS_SCALE)+ggtitle("k=6")
+grid.arrange(Plot.1,plot.2,plot.3, nrow = 3)
+```
+```{r}
+distance<- dist(PHARMACEUTICALS_SCALE, method = "euclidean")
+fviz_dist(distance)
+```
+
+```{r}
+Aggregate.data<-kmeans(PHARMACEUTICALS_SCALE,5)
+aggregate(PHARMACEUTICALS_SCALE, by=list(Aggregate.data$cluster), FUN=mean)
+aggregate_Data1 <- data.frame(PHARMACEUTICALS_SCALE, Aggregate.data$cluster)
+aggregate_Data1
+```
+
+
+```{r}
+# estimating how many clusters there are
+# To calculate the value of k, the data are scaled using the elbow method.
+fviz_nbclust(PHARMACEUTICALS_SCALE, FUNcluster = kmeans, method = "wss") + labs(subtitle = "Elbow Method")
+
+```
+
+```{r}
+# The number of clusters is calculated by scaling the data using the silhouette method.
+fviz_nbclust(PHARMACEUTICALS_SCALE,FUNcluster = kmeans,method = "silhouette")+labs(subtitle="Silhouette Method")
+```
+```{r}
+# Final analysis and Extracting results using 5 clusters and Visualize the results
+set.seed(300)
+FINALCLUSTER<- kmeans(PHARMACEUTICALS_SCALE, 5, nstart = 25)
+print(FINALCLUSTER)
+clusplot(PHARMACEUTICALS_SCALE,FINALCLUSTER$cluster, color = TRUE, labels = 2,lines = 0)
+```
+```{R}
+#b) Interpret the clusters with respect to the numerical variables used in forming the clusters.
+#Cluster 1 consists of the stocks AHM, SGP, WYE, BMY, AZN, ABT, NVS, and LLY (lowest Market Cap, lowest Beta, lowest PE Ratio, highest Leverage, and highest Revenue Growth).
+#Cluster 2 (lowest Rev Growth, highest Beta and levearge, lowest Net Profit Margin) is composed of the stocks BAY, CHTT, and IVX.
+#Cluster3 Lowest PE Ratio, Highest ROE, Lowest ROA, Lowest Net Profit Margin, Highest Rev Growth: WPI, MRX, ELN, AVE
+#cluster4 AGN, PHA (highest PE Ratio, lowest Asset Turnover, and lowest Beta)
+#cluster5 JNJ, MRK, PFE, and GSK(Highest Market Cap, ROE, ROA, Asset Turnover Ratio, and Lowest Beta/PE Ratio)
+
+PHARMA_CLUSTER <- PHARMACEUTICALS[,c(12,13,14)]%>% mutate(clusters = FINALCLUSTER$cluster)%>% arrange(clusters, ascending = TRUE)
+PHARMA_CLUSTER
+```
+```{R}
+#(c)Is there a pattern in the clusters with respect to the numerical variables (10 to 12)? 
+plot1<-ggplot(PHARMA_CLUSTER, mapping = aes(factor(clusters), fill=Median_Recommendation))+geom_bar(position = 'dodge')+labs(x ='No of clusters')
+plot2<- ggplot(PHARMA_CLUSTER, mapping = aes(factor(clusters),fill = Location))+geom_bar(position = 'dodge')+labs(x ='No of clusters')
+plot3<- ggplot(PHARMA_CLUSTER, mapping = aes(factor(clusters),fill = Exchange))+geom_bar(position = 'dodge')+labs(x ='No of clusters')
+grid.arrange(plot1, plot2, plot3) 
+
+#Given the graph:
+#Cluster 1: The Hold median, which also includes distinct Hold, Moderate Buy, Moderate Sell, and Strong Buy medians, is the highest in this cluster. They are from the US, the UK, and Switzerland and are traded on the NYSE.
+#Cluster 2 features a distinct Hold and Moderate Buy median as well as a varied count between the US and Germany, despite the fact that the firms are evenly distributed throughout AMEX, NASDAQ, and NYSE.
+#Cluster 3 is traded on the NYSE, has distinct counts for France, Ireland, and the US, and has median buy and sell prices that are roughly similar.
+#Cluster 4: has the same hold and moderate buy medians and is distributed throughout the US and UK in addition to being listed in.
+#Cluster 5: only listed on the NYSE, evenly distributed across the US and Canada, with medians of Hold and Moderate Buy.
+#Regarding the media recommendation variable, the clusters exhibit a certain pattern:
+#Hold Recommendation is present in Clusters 1 and 2.
+#All of Clusters 3, 4, and 5 have a moderate purchase recommendation.
+```
+
+
+```{r}
+# (d)Provide an appropriate name for each cluster using any or all of the variables in the dataset.
+
+#Cluster 1 :-  HIGH HOLD CLUSTER
+#Cluster 2 :- HOLD CLUSTER
+#Cluster 3 :- BUY-SELL CLUSTER
+#Cluster 4 :- HOLD-BUY CLUSTER
+#Cluster 5 :- HOLD-BUY CLUSTER
+````
+

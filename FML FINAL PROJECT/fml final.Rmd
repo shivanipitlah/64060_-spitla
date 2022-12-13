@@ -1,0 +1,113 @@
+---
+title: "Final Project"
+author: "Shivani Haridas Pitla"
+date: "2022-12-07"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#installing and calling the required packages
+library(tidyverse)
+library(ggplot2)
+library(factoextra)
+library(ISLR)
+library(gridExtra)
+library(cluster)
+library(dplyr)
+library(caret)
+```
+
+```{r}
+#Importing the data set
+MFCI=read.csv("C:/Users/shiva/Downloads/fuel_receipts_costs_eia923.csv")
+```
+
+```{r}
+#choosing the variables 
+MFCI1<-MFCI[,c(11,15,16,17,18,19,20)]
+str(MFCI1)
+```
+
+```{r}
+#checking if there are any NA's
+colSums(is.na(MFCI1))
+```
+
+```{r}
+#Imputing NA values
+MFCI1$fuel_cost_per_mmbtu[is.na(MFCI1$fuel_cost_per_mmbtu)]<-
+  mean(MFCI1$fuel_cost_per_mmbtu, na.rm = T)
+MFCI1$mercury_content_ppm[is.na(MFCI1$mercury_content_ppm)]<-
+  mean(MFCI1$mercury_content_ppm, na.rm = T)
+colMeans(is.na(MFCI1))
+```
+
+```{r}
+#Sampling 2% of the data from the whole dataset
+set.seed(1211)
+MFCI1 <-MFCI1%>%sample_frac(0.02)
+```
+
+```{R}
+#partitioning the data
+set.seed(1000)
+MFCI_part <- createDataPartition(MFCI1$fuel_cost_per_mmbtu,p=.75, list = FALSE)
+Train <- MFCI1[MFCI_part,]
+Test <- MFCI1[-MFCI_part,]
+```
+
+```{r}
+#Data Normalization
+df <- Train[,-c(1)]
+normmodel_MFCI1 <- preProcess(df, 
+                method=c("center","scale"))
+trainnorm_MFCI1<-predict(normmodel_MFCI1,df)
+
+```
+
+```{r}
+#Finding the optimal "k" 
+A<-fviz_nbclust(trainnorm_MFCI1,kmeans,method="silhouette")
+A
+B<-fviz_nbclust(trainnorm_MFCI1,kmeans,method="wss")
+B
+```
+
+```{r}
+# computing K-means clustering for K=7 
+kmeans.1 <- kmeans(trainnorm_MFCI1, centers = 7, nstart = 25)
+cluster <- kmeans.1$cluster
+
+#binding the training set with the cluster
+mfci_bind<-cbind(Train,cluster)
+head(mfci_bind)
+
+#plotting the clusters
+mfci_plot<-fviz_cluster(kmeans.1, data = trainnorm_MFCI1)+ggtitle("k=7")
+mfci_plot
+
+#calculating the averages
+mfci_med<-mfci_bind%>%group_by(cluster)%>%
+  summarize(avrg_units=median(fuel_received_units),
+            avrg_cost=median(fuel_cost_per_mmbtu),
+            avrg_mmbtu=median(fuel_mmbtu_per_unit),
+            avrg_sulfur=median(sulfur_content_pct),
+            avrg_ash=median(ash_content_pct),
+            avrg_mercury=median(mercury_content_ppm))
+mfci_med
+```
+
+```{r}
+#Binding cluster and fuel group for interpretations
+mfci_bind %>% select(fuel_group_code,cluster) %>% group_by(cluster,fuel_group_code) %>% count()
+mfci_bind
+```
+
+
